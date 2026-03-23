@@ -83,6 +83,6 @@ def create_english_model(infile: str, outfile: str) -> None:
 
 if __name__ == '__main__':
     try:
-        create_english_model('dataset-english-small.txt', 'model-english.txt')
+        create_english_model('dataset-english.txt', 'model-english.txt')
     except KeyboardInterrupt:
         print("\nProcessing interrupted by user.")
