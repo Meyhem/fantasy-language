@@ -1,4 +1,4 @@
-from collections import Counter, defaultdict, deque
+from collections import Counter, defaultdict
 import os
 import time
 
@@ -7,41 +7,29 @@ def create_english_model(infile: str, outfile: str) -> None:
     transition_count = defaultdict(Counter)
 
     total_size = os.path.getsize(infile)
-    chars_read = 0
     start_time = time.time()
-    last_log = start_time
-    CHUNK_SIZE = 50 * 1024 * 1024  # 50MB
 
-    buffer = deque(maxlen=4)
-    prev_tail = ''
     with open(infile, 'r', encoding='utf-8') as f:
-        while True:
-            chunk = f.read(CHUNK_SIZE)
-            if not chunk:
-                break
-            full_chunk = prev_tail + chunk
-            for char in full_chunk:
-                chars_read += 1
-                buffer.append(char)
-                if len(buffer) == 4:
-                    trigram1 = ''.join(buffer)[:3]
-                    trigram2 = ''.join(buffer)[1:4]
-                    trigram_count[trigram1] += 1
-                    transition_count[trigram1][trigram2] += 1
+        text = f.read()
+        chars_read = len(text)
+        for i in range(len(text) - 3):
+            gram1 = text[i:i+3]
+            gram2 = text[i+1:i+4]
+            trigram_count[gram1] += 1
+            transition_count[gram1][gram2] += 1
 
-                current_time = time.time()
-                if current_time - last_log >= 10:
-                    progress = (chars_read / total_size) * 100 if total_size > 0 else 100
-                    print(f"Progress: {progress:.2f}% ({chars_read}/{total_size} chars, {len(trigram_count)} trigrams)")
-                    last_log = current_time
-            prev_tail = full_chunk[-3:] if len(full_chunk) >= 3 else full_chunk
+        elapsed = time.time() - start_time
+        print(f"Processed {chars_read} chars in {elapsed:.2f}s")
+
+    lines = []
+    for trigram1 in sorted(trigram_count):
+        total = trigram_count[trigram1]
+        for trigram2, count in sorted(transition_count[trigram1].items()):
+            prob = count / total
+            lines.append(f"{trigram1}|{trigram2}|{prob:.10f}")
 
     with open(outfile, 'w', encoding='utf-8') as f:
-        for trigram1 in sorted(trigram_count):
-            total = trigram_count[trigram1]
-            for trigram2, count in sorted(transition_count[trigram1].items()):
-                prob = count / total
-                f.write(f"{trigram1}|{trigram2}|{prob:.10f}\n")
+        f.write('\n'.join(lines) + '\n')
 
 if __name__ == '__main__':
     try:

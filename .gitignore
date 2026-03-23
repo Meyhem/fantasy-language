@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 dataset-raw.json
 dataset-english.txt
+*.txt
+
 # C extensions
 *.so
 
