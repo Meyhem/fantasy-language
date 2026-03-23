@@ -43,13 +43,28 @@ def create_english_model(infile: str, outfile: str) -> None:
         if cumulative >= 0.99 * total_occurrences:
             break
 
+    # Clean transition_count: remove transitions <1% prob for selected trigrams
+    removed_count = 0
+    total_trans_before = 0
+    for trigram1 in selected_trigrams:
+        total_trans_before += len(transition_count[trigram1])
+        total_original = trigram_count[trigram1]
+        to_remove = []
+        for trigram2 in transition_count[trigram1]:
+            count = transition_count[trigram1][trigram2]
+            if count / total_original < 0.01:
+                to_remove.append(trigram2)
+        removed_count += len(to_remove)
+        for trigram2 in to_remove:
+            del transition_count[trigram1][trigram2]
+
     lines = []
-    for trigram1 in sorted(trigram_count):
-        if trigram1 not in selected_trigrams:
+    for trigram1 in sorted(selected_trigrams):
+        new_total = sum(transition_count[trigram1].values())
+        if new_total == 0:
             continue
-        total = trigram_count[trigram1]
         for trigram2, count in sorted(transition_count[trigram1].items()):
-            prob = count / total
+            prob = count / new_total
             lines.append(f"{trigram1}|{trigram2}|{prob:.10f}")
 
     with open(outfile, 'w', encoding='utf-8') as f:
@@ -60,6 +75,7 @@ def create_english_model(infile: str, outfile: str) -> None:
     used = len(selected_trigrams)
     top_10 = sorted_trigrams[:10]
     print(f"Total trigrams found: {total_found}")
+    print(f"Removed {removed_count} low-probability transitions out of {total_trans_before} transitions")
     print(f"Exporting {used} trigrams")
     print("Top 10 most frequent trigrams:")
     for trigram, count in top_10:
@@ -67,6 +83,6 @@ def create_english_model(infile: str, outfile: str) -> None:
 
 if __name__ == '__main__':
     try:
-        create_english_model('dataset-english.txt', 'model-english.txt')
+        create_english_model('dataset-english-small.txt', 'model-english.txt')
     except KeyboardInterrupt:
         print("\nProcessing interrupted by user.")
