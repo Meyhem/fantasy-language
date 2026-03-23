@@ -60,7 +60,7 @@ def create_english_model(infile: str, outfile: str) -> None:
     used = len(selected_trigrams)
     top_10 = sorted_trigrams[:10]
     print(f"Total trigrams found: {total_found}")
-    print(f"Trigrams used in export: {used}")
+    print(f"Exporting {used} trigrams")
     print("Top 10 most frequent trigrams:")
     for trigram, count in top_10:
         print(f"{trigram}: {count}")
