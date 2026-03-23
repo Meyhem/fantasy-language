@@ -32,8 +32,21 @@ def create_english_model(infile: str, outfile: str) -> None:
         elapsed = time.time() - start_time
         print(f"Processed {chars_read} chars in {elapsed:.2f}s")
 
+    # Calculate total occurrences and select top trigrams for 99%
+    total_occurrences = sum(trigram_count.values())
+    sorted_trigrams = sorted(trigram_count.items(), key=lambda x: x[1], reverse=True)
+    cumulative = 0
+    selected_trigrams = set()
+    for trigram, count in sorted_trigrams:
+        cumulative += count
+        selected_trigrams.add(trigram)
+        if cumulative >= 0.99 * total_occurrences:
+            break
+
     lines = []
     for trigram1 in sorted(trigram_count):
+        if trigram1 not in selected_trigrams:
+            continue
         total = trigram_count[trigram1]
         for trigram2, count in sorted(transition_count[trigram1].items()):
             prob = count / total
@@ -42,8 +55,18 @@ def create_english_model(infile: str, outfile: str) -> None:
     with open(outfile, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
 
+    # Print stats
+    total_found = len(trigram_count)
+    used = len(selected_trigrams)
+    top_10 = sorted_trigrams[:10]
+    print(f"Total trigrams found: {total_found}")
+    print(f"Trigrams used in export: {used}")
+    print("Top 10 most frequent trigrams:")
+    for trigram, count in top_10:
+        print(f"{trigram}: {count}")
+
 if __name__ == '__main__':
     try:
-        create_english_model('dataset-english-small.txt', 'model-english.txt')
+        create_english_model('dataset-english.txt', 'model-english.txt')
     except KeyboardInterrupt:
         print("\nProcessing interrupted by user.")
