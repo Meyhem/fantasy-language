@@ -22,11 +22,11 @@ def create_english_model(infile: str, outfile: str) -> None:
             # Progress reporting every 5 seconds
             current_time = time.time()
             if current_time - last_print >= 5:
-                processed_trigrams = i + 1
+                unique_trigrams = len(trigram_count)
                 processed_chars = i + 3
                 total_chars = len(text)
                 percentage = (processed_chars / total_chars) * 100 if total_chars > 0 else 0
-                print(f"Trigrams: {processed_trigrams}, Processed chars: {processed_chars:.0e} / {total_chars:.0e}, {percentage:.2f}%")
+                print(f"Unique trigrams: {unique_trigrams}, Processed chars: {processed_chars:.0e} / {total_chars:.0e}, {percentage:.2f}%")
                 last_print = current_time
 
         elapsed = time.time() - start_time
