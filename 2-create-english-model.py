@@ -10,26 +10,31 @@ def create_english_model(infile: str, outfile: str) -> None:
     chars_read = 0
     start_time = time.time()
     last_log = start_time
+    CHUNK_SIZE = 50 * 1024 * 1024  # 50MB
 
     buffer = deque(maxlen=4)
+    prev_tail = ''
     with open(infile, 'r', encoding='utf-8') as f:
         while True:
-            char = f.read(1)
-            if not char:
+            chunk = f.read(CHUNK_SIZE)
+            if not chunk:
                 break
-            chars_read += 1
-            buffer.append(char)
-            if len(buffer) == 4:
-                trigram1 = ''.join(buffer)[:3]
-                trigram2 = ''.join(buffer)[1:4]
-                trigram_count[trigram1] += 1
-                transition_count[trigram1][trigram2] += 1
+            full_chunk = prev_tail + chunk
+            for char in full_chunk:
+                chars_read += 1
+                buffer.append(char)
+                if len(buffer) == 4:
+                    trigram1 = ''.join(buffer)[:3]
+                    trigram2 = ''.join(buffer)[1:4]
+                    trigram_count[trigram1] += 1
+                    transition_count[trigram1][trigram2] += 1
 
-            current_time = time.time()
-            if current_time - last_log >= 10:
-                progress = (chars_read / total_size) * 100 if total_size > 0 else 100
-                print(f"Progress: {progress:.2f}% ({chars_read}/{total_size} chars, {len(trigram_count)} trigrams)")
-                last_log = current_time
+                current_time = time.time()
+                if current_time - last_log >= 10:
+                    progress = (chars_read / total_size) * 100 if total_size > 0 else 100
+                    print(f"Progress: {progress:.2f}% ({chars_read}/{total_size} chars, {len(trigram_count)} trigrams)")
+                    last_log = current_time
+            prev_tail = full_chunk[-3:] if len(full_chunk) >= 3 else full_chunk
 
     with open(outfile, 'w', encoding='utf-8') as f:
         for trigram1 in sorted(trigram_count):
@@ -40,6 +45,6 @@ def create_english_model(infile: str, outfile: str) -> None:
 
 if __name__ == '__main__':
     try:
-        create_english_model('dataset-english.txt', 'model-english.model')
+        create_english_model('dataset-english.txt', 'model-english.txt')
     except KeyboardInterrupt:
         print("\nProcessing interrupted by user.")
