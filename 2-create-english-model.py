@@ -35,6 +35,12 @@ def create_english_model(infile: str, outfile: str) -> None:
     # Calculate total occurrences and select top trigrams for 99%
     total_occurrences = sum(trigram_count.values())
     sorted_trigrams = sorted(trigram_count.items(), key=lambda x: x[1], reverse=True)
+
+    # Write all trigrams and their counts to model-counts-english.txt
+    with open('model-counts-english.txt', 'w', encoding='utf-8') as f:
+        for trigram, count in sorted_trigrams:
+            f.write(f"{trigram}|{count}\n")
+
     cumulative = 0
     selected_trigrams = set()
     for trigram, count in sorted_trigrams:
@@ -73,13 +79,9 @@ def create_english_model(infile: str, outfile: str) -> None:
     # Print stats
     total_found = len(trigram_count)
     used = len(selected_trigrams)
-    top_10 = sorted_trigrams[:10]
     print(f"Total trigrams found: {total_found}")
     print(f"Removed {removed_count} low-probability transitions out of {total_trans_before} transitions")
     print(f"Exporting {used} trigrams")
-    print("Top 10 most frequent trigrams:")
-    for trigram, count in top_10:
-        print(f"{trigram}: {count}")
 
 if __name__ == '__main__':
     try:
